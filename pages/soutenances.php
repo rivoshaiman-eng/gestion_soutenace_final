@@ -1,16 +1,34 @@
 <?php
 include("../includes/config.php");
 
+function getOrganismeId($conn, $organisme_input){
+    $organisme_input = trim($organisme_input);
+
+    if(strpos($organisme_input, " - ") !== false){
+        $parts = explode(" - ", $organisme_input);
+        if(is_numeric($parts[0])){
+            return $parts[0];
+        }
+    }
+
+    $design = mysqli_real_escape_string($conn, $organisme_input);
+    mysqli_query($conn,"INSERT INTO organisme(design, lieu) VALUES('$design','')");
+    return mysqli_insert_id($conn);
+}
+
 if(isset($_POST['ajouter'])){
-    $matricule = $_POST['matricule'];
-    $idorg = $_POST['idorg'];
-    $annee_univ = $_POST['annee_univ'];
-    $note = $_POST['note'];
-    $president = $_POST['president'];
-    $examinateur = $_POST['examinateur'];
-    $rapporteur_int = $_POST['rapporteur_int'];
-    $rapporteur_ext = $_POST['rapporteur_ext'];
-    $date_soutenance = $_POST['date_soutenance'];
+    $matricule = mysqli_real_escape_string($conn, $_POST['matricule']);
+    $idorg = getOrganismeId($conn, $_POST['organisme_input']);
+    $annee_univ = mysqli_real_escape_string($conn, $_POST['annee_univ']);
+
+    $note = str_replace(',', '.', $_POST['note']);
+    $note = mysqli_real_escape_string($conn, $note);
+
+    $president = mysqli_real_escape_string($conn, $_POST['president']);
+    $examinateur = mysqli_real_escape_string($conn, $_POST['examinateur']);
+    $rapporteur_int = mysqli_real_escape_string($conn, $_POST['rapporteur_int']);
+    $rapporteur_ext = mysqli_real_escape_string($conn, $_POST['rapporteur_ext']);
+    $date_soutenance = mysqli_real_escape_string($conn, $_POST['date_soutenance']);
 
     mysqli_query($conn,"INSERT INTO soutenir
     (matricule,idorg,annee_univ,note,president,examinateur,rapporteur_int,rapporteur_ext,date_soutenance)
@@ -22,23 +40,26 @@ if(isset($_POST['ajouter'])){
 }
 
 if(isset($_GET['supprimer'])){
-    $id = $_GET['supprimer'];
+    $id = mysqli_real_escape_string($conn, $_GET['supprimer']);
     mysqli_query($conn,"DELETE FROM soutenir WHERE id='$id'");
     header("Location: soutenances.php");
     exit();
 }
 
 if(isset($_POST['modifier'])){
-    $id = $_POST['id'];
-    $matricule = $_POST['matricule'];
-    $idorg = $_POST['idorg'];
-    $annee_univ = $_POST['annee_univ'];
-    $note = $_POST['note'];
-    $president = $_POST['president'];
-    $examinateur = $_POST['examinateur'];
-    $rapporteur_int = $_POST['rapporteur_int'];
-    $rapporteur_ext = $_POST['rapporteur_ext'];
-    $date_soutenance = $_POST['date_soutenance'];
+    $id = mysqli_real_escape_string($conn, $_POST['id']);
+    $matricule = mysqli_real_escape_string($conn, $_POST['matricule']);
+    $idorg = getOrganismeId($conn, $_POST['organisme_input']);
+    $annee_univ = mysqli_real_escape_string($conn, $_POST['annee_univ']);
+
+    $note = str_replace(',', '.', $_POST['note']);
+    $note = mysqli_real_escape_string($conn, $note);
+
+    $president = mysqli_real_escape_string($conn, $_POST['president']);
+    $examinateur = mysqli_real_escape_string($conn, $_POST['examinateur']);
+    $rapporteur_int = mysqli_real_escape_string($conn, $_POST['rapporteur_int']);
+    $rapporteur_ext = mysqli_real_escape_string($conn, $_POST['rapporteur_ext']);
+    $date_soutenance = mysqli_real_escape_string($conn, $_POST['date_soutenance']);
 
     mysqli_query($conn,"UPDATE soutenir SET
         matricule='$matricule',
@@ -59,7 +80,7 @@ if(isset($_POST['modifier'])){
 
 $soutenances = mysqli_query($conn,"
 SELECT s.*, e.nom AS nom_etudiant, e.prenoms AS prenoms_etudiant,
-o.design AS organisme
+o.design AS organisme, o.lieu AS lieu_organisme
 FROM soutenir s
 LEFT JOIN etudiant e ON s.matricule = e.matricule
 LEFT JOIN organisme o ON s.idorg = o.idorg
@@ -69,6 +90,16 @@ ORDER BY s.id DESC
 $etudiants = mysqli_query($conn,"SELECT * FROM etudiant ORDER BY nom ASC");
 $organismes = mysqli_query($conn,"SELECT * FROM organisme ORDER BY design ASC");
 $professeurs = mysqli_query($conn,"SELECT * FROM professeur ORDER BY nom ASC");
+
+$organismes_list = [];
+while($o = mysqli_fetch_assoc($organismes)){
+    $organismes_list[] = $o;
+}
+
+$professeurs_list = [];
+while($p = mysqli_fetch_assoc($professeurs)){
+    $professeurs_list[] = $p;
+}
 
 include("../includes/header.php");
 include("../includes/sidebar.php");
@@ -113,7 +144,7 @@ include("../includes/sidebar.php");
     <td><?= $s['matricule']; ?> - <?= $s['nom_etudiant']; ?> <?= $s['prenoms_etudiant']; ?></td>
     <td><?= $s['organisme']; ?></td>
     <td><?= $s['annee_univ']; ?></td>
-    <td><?= $s['note']; ?>/20</td>
+    <td><?= number_format($s['note'], 2, ',', ''); ?>/20</td>
     <td><?= $s['date_soutenance']; ?></td>
     <td>
         Président : <?= $s['president']; ?><br>
@@ -133,7 +164,7 @@ include("../includes/sidebar.php");
         </a>
     </td>
 </tr>
-<!-- MODAL MODIFIER -->
+
 <div class="modal fade" id="modif<?= $s['id']; ?>">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -149,14 +180,24 @@ include("../includes/sidebar.php");
                     <label>Matricule</label>
                     <input type="text" name="matricule" class="form-control mb-2" value="<?= $s['matricule']; ?>" required>
 
-                    <label>ID Organisme</label>
-                    <input type="number" name="idorg" class="form-control mb-2" value="<?= $s['idorg']; ?>" required>
+                    <label>Organisme</label>
+                    <input list="listeOrganismesModif<?= $s['id']; ?>" 
+                           name="organisme_input" 
+                           class="form-control mb-2"
+                           value="<?= $s['idorg']; ?> - <?= $s['organisme']; ?> - <?= $s['lieu_organisme']; ?>"
+                           required>
+
+                    <datalist id="listeOrganismesModif<?= $s['id']; ?>">
+                        <?php foreach($organismes_list as $o){ ?>
+                            <option value="<?= $o['idorg']; ?> - <?= $o['design']; ?> - <?= $o['lieu']; ?>"></option>
+                        <?php } ?>
+                    </datalist>
 
                     <label>Année universitaire</label>
                     <input type="text" name="annee_univ" class="form-control mb-2" value="<?= $s['annee_univ']; ?>" required>
 
                     <label>Note</label>
-                    <input type="number" name="note" class="form-control mb-2" value="<?= $s['note']; ?>" required>
+                    <input type="number" name="note" class="form-control mb-2" min="0" max="20" step="0.01" value="<?= $s['note']; ?>" required>
 
                     <label>Président</label>
                     <input type="text" name="president" class="form-control mb-2" value="<?= $s['president']; ?>" required>
@@ -192,7 +233,6 @@ include("../includes/sidebar.php");
 
 </div>
 
-<!-- MODAL AJOUT -->
 <div class="modal fade" id="ajoutModal">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -214,23 +254,32 @@ include("../includes/sidebar.php");
                     </select>
 
                     <label>Organisme</label>
-                    <select name="idorg" class="form-select mb-2" required>
-                        <?php while($o = mysqli_fetch_assoc($organismes)){ ?>
-                            <option value="<?= $o['idorg']; ?>">
-                                <?= $o['design']; ?> - <?= $o['lieu']; ?>
-                            </option>
+                    <input list="listeOrganismesAjout" 
+                           name="organisme_input" 
+                           class="form-control mb-2"
+                           placeholder="Tapez un nouvel organisme ou choisissez dans la liste..." required>
+
+                    <datalist id="listeOrganismesAjout">
+                        <?php foreach($organismes_list as $o){ ?>
+                            <option value="<?= $o['idorg']; ?> - <?= $o['design']; ?> - <?= $o['lieu']; ?>"></option>
                         <?php } ?>
-                    </select>
+                    </datalist>
+
+                    <small class="text-muted">
+                        Vous pouvez écrire un nouvel organisme ou sélectionner un organisme déjà enregistré.
+                    </small>
+
+                    <br><br>
 
                     <label>Année universitaire</label>
                     <input type="text" name="annee_univ" class="form-control mb-2" value="2025-2026" required>
 
                     <label>Note</label>
-                    <input type="number" name="note" class="form-control mb-2" min="0" max="20" required>
+                    <input type="number" name="note" class="form-control mb-2" min="0" max="20" step="0.01" required>
 
                     <label>Président</label>
                     <select name="president" class="form-select mb-2" required>
-                        <?php mysqli_data_seek($professeurs, 0); while($p = mysqli_fetch_assoc($professeurs)){ ?>
+                        <?php foreach($professeurs_list as $p){ ?>
                             <option value="<?= $p['nom'].' '.$p['prenoms']; ?>">
                                 <?= $p['nom']; ?> <?= $p['prenoms']; ?> - <?= $p['grade']; ?>
                             </option>
@@ -239,7 +288,7 @@ include("../includes/sidebar.php");
 
                     <label>Examinateur</label>
                     <select name="examinateur" class="form-select mb-2" required>
-                        <?php mysqli_data_seek($professeurs, 0); while($p = mysqli_fetch_assoc($professeurs)){ ?>
+                        <?php foreach($professeurs_list as $p){ ?>
                             <option value="<?= $p['nom'].' '.$p['prenoms']; ?>">
                                 <?= $p['nom']; ?> <?= $p['prenoms']; ?> - <?= $p['grade']; ?>
                             </option>
@@ -248,7 +297,7 @@ include("../includes/sidebar.php");
 
                     <label>Rapporteur interne</label>
                     <select name="rapporteur_int" class="form-select mb-2" required>
-                        <?php mysqli_data_seek($professeurs, 0); while($p = mysqli_fetch_assoc($professeurs)){ ?>
+                        <?php foreach($professeurs_list as $p){ ?>
                             <option value="<?= $p['nom'].' '.$p['prenoms']; ?>">
                                 <?= $p['nom']; ?> <?= $p['prenoms']; ?> - <?= $p['grade']; ?>
                             </option>
@@ -257,7 +306,7 @@ include("../includes/sidebar.php");
 
                     <label>Rapporteur externe</label>
                     <select name="rapporteur_ext" class="form-select mb-2" required>
-                        <?php mysqli_data_seek($professeurs, 0); while($p = mysqli_fetch_assoc($professeurs)){ ?>
+                        <?php foreach($professeurs_list as $p){ ?>
                             <option value="<?= $p['nom'].' '.$p['prenoms']; ?>">
                                 <?= $p['nom']; ?> <?= $p['prenoms']; ?> - <?= $p['grade']; ?>
                             </option>

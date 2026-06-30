@@ -46,9 +46,13 @@ include("../includes/sidebar.php");
 ?>
 
 <div class="content">
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Gestion des Professeurs</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajoutModal">+ Nouveau</button>
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajoutModal">
+            + Nouveau
+        </button>
     </div>
 
     <div class="card shadow-sm">
@@ -78,8 +82,15 @@ include("../includes/sidebar.php");
                         <td><?= $p['civilite']; ?></td>
                         <td><?= $p['grade']; ?></td>
                         <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modif<?= $p['idprof']; ?>">Modifier</button>
-                            <a href="professeurs.php?supprimer=<?= $p['idprof']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ce professeur ?')">Supprimer</a>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modif<?= $p['idprof']; ?>">
+                                Modifier
+                            </button>
+
+                            <a href="professeurs.php?supprimer=<?= $p['idprof']; ?>" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Supprimer ce professeur ?')">
+                                Supprimer
+                            </a>
                         </td>
                     </tr>
 
@@ -88,7 +99,7 @@ include("../includes/sidebar.php");
                             <div class="modal-content">
                                 <form method="POST">
                                     <div class="modal-header">
-                                        <h5>Modifier Professeur</h5>
+                                        <h5 class="modal-title">Modifier Professeur</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
 
@@ -105,14 +116,21 @@ include("../includes/sidebar.php");
                                         <input type="text" name="prenoms" class="form-control mb-2" value="<?= $p['prenoms']; ?>" required>
 
                                         <label>Civilité</label>
-                                        <select name="civilite" class="form-select mb-2">
+                                        <select name="civilite" class="form-select mb-2" required>
                                             <option <?= $p['civilite']=="Mr"?"selected":"" ?>>Mr</option>
                                             <option <?= $p['civilite']=="Mme"?"selected":"" ?>>Mme</option>
                                             <option <?= $p['civilite']=="Mlle"?"selected":"" ?>>Mlle</option>
                                         </select>
 
                                         <label>Grade</label>
-                                        <input type="text" name="grade" class="form-control mb-2" value="<?= $p['grade']; ?>" required>
+                                        <select name="grade" class="form-select mb-2" required>
+                                            <option <?= $p['grade']=="Professeur Titulaire"?"selected":"" ?>>Professeur Titulaire</option>
+                                            <option <?= $p['grade']=="Maître de Conférences"?"selected":"" ?>>Maître de Conférences</option>
+                                            <option <?= $p['grade']=="Assistant d'Enseignement Supérieur et de Recherche"?"selected":"" ?>>Assistant d'Enseignement Supérieur et de Recherche</option>
+                                            <option <?= $p['grade']=="Docteur HDR"?"selected":"" ?>>Docteur HDR</option>
+                                            <option <?= $p['grade']=="Docteur en Informatique"?"selected":"" ?>>Docteur en Informatique</option>
+                                            <option <?= $p['grade']=="Doctorant en Informatique"?"selected":"" ?>>Doctorant en Informatique</option>
+                                        </select>
                                     </div>
 
                                     <div class="modal-footer">
@@ -134,7 +152,7 @@ include("../includes/sidebar.php");
         <div class="modal-content">
             <form method="POST">
                 <div class="modal-header">
-                    <h5>Nouveau Professeur</h5>
+                    <h5 class="modal-title">Nouveau Professeur</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -149,14 +167,21 @@ include("../includes/sidebar.php");
                     <input type="text" name="prenoms" class="form-control mb-2" required>
 
                     <label>Civilité</label>
-                    <select name="civilite" class="form-select mb-2">
+                    <select name="civilite" class="form-select mb-2" required>
                         <option>Mr</option>
                         <option>Mme</option>
                         <option>Mlle</option>
                     </select>
 
                     <label>Grade</label>
-                    <input type="text" name="grade" class="form-control mb-2" required>
+                    <select name="grade" class="form-select mb-2" required>
+                        <option>Professeur Titulaire</option>
+                        <option>Maître de Conférences</option>
+                        <option>Assistant d'Enseignement Supérieur et de Recherche</option>
+                        <option>Docteur HDR</option>
+                        <option>Docteur en Informatique</option>
+                        <option>Doctorant en Informatique</option>
+                    </select>
                 </div>
 
                 <div class="modal-footer">
