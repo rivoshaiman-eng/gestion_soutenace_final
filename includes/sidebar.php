@@ -5,7 +5,7 @@
         </div>
         <div>
             <h4 class="mb-0">Soutenances</h4>
-            <small class="text-muted">Gestion Universitaire</small>
+            <small class="text-muted">Gestion SOUTENANCE</small>
         </div>
     </div>
 
